@@ -1,7 +1,9 @@
 package application;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,47 +16,45 @@ public class Program {
 	public static void main(String[] args) {
 			
 		List<Product> list = new ArrayList<>();
+
+		String sourceFileStr = "c:\\KevDev\\sourcefile.csv";
+		File sourceFile = new File(sourceFileStr);
+		String sourceFolderStr = sourceFile.getParent();
 		
-		list.add(new Product("TV LED", 1290.99,1));
-		list.add(new Product("Video Game Chair", 350.50,3));
-		list.add(new Product("Iphone X", 900.00,2));
-		list.add(new Product("Samsung Galaxy 9", 850.00,2));
-	
-		// Source File
-		String[] linesSource = new String[list.size()];
-		for(int i=0; i<linesSource.length; i++) {
-			linesSource[i] = list.get(i).toString();
-		}
-			
-		File path = new File("c:\\KevDev\\sourcefile.csv");			
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter(path))) {
-			for(String line : linesSource) {
-				bw.write(line);
-				bw.newLine();
-			}	
-		}
-		catch (IOException e) {
+		boolean success = new File(sourceFolderStr + "\\out").mkdir();
+		
+		String targetFileStr = sourceFolderStr + "\\out\\summary.csv";
+
+		try (BufferedReader br = new BufferedReader(new FileReader(sourceFileStr))) {
+
+			String itemCsv = br.readLine();
+			while (itemCsv != null) {	
+
+				String[] fields = itemCsv.split(",");
+				String name = fields[0];
+				double price = Double.parseDouble(fields[1]);
+				int quantity = Integer.parseInt(fields[2]);
+
+				list.add(new Product(name, price, quantity));
+
+				itemCsv = br.readLine();
+			}
+
+			try (BufferedWriter bw = new BufferedWriter(new FileWriter(targetFileStr))) {
+
+				for (Product item : list) {
+					bw.write(item.getName() + "," + String.format("%.2f", item.totalValue()));
+					bw.newLine();
+				}
+
+				System.out.println(targetFileStr + " CREATED!");
+				
+			} catch (IOException e) {
+				System.out.println("Error: " + e.getMessage());
+			}
+
+		} catch (IOException e) {
 			System.out.println("Error: " + e.getMessage());
 		}
-		
-		// Output File
-		boolean createFolder = new File (path.getParent()+"\\out").mkdir();
-		System.out.println("Folder created: " + createFolder);
-		
-		String[] linesOut = new String[list.size()];
-		for(int i=0; i<linesOut.length; i++) {
-			linesOut[i] = list.get(i).getName() + "," + String.format("%.2f", list.get(i).totalValue());
-		}		
-		
-		String pathOut = "c:\\KevDev\\out\\summary.csv";	
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter(pathOut))) {
-			for(String line : linesOut) {
-				bw.write(line);
-				bw.newLine();
-			}	
-		}
-		catch (IOException e) {
-			System.out.println("Error: " + e.getMessage());
-		}	
 	}
 }
